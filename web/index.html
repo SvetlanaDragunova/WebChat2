@@ -1,0 +1,30 @@
+<html>
+  <head>
+      <meta charset="UTF-8">
+    <title>WebChat</title>
+    <link href="bootstrap-3.3.6-dist/css/bootstrap.css" rel="stylesheet">
+    <script src="bootstrap-3.3.6-dist/js/app.js"></script>
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+      <script src="bootstrap-3.3.6-dist/js/bootstrap.js"></script>
+  </head>
+  <body>
+    <h1 class="h1" align="center">WebChat</h1>
+    <div class="container">
+        <div id = "authinfo"></div>
+        <form>
+           Имя<input id="authlog" class="form-control" type="text" placeholder="Имя" >
+           Пароль<input id="authpass" class="form-control" type="password" placeholder="Пароль">
+           <button class="btn" onclick="auth()">Войти</button>
+        </form>
+    </div>
+  <hr>
+    <div class="container">
+        <div id = "reginfo"></div>
+        <form>
+            Имя<input id="reglog" class="form-control" type="text" placeholder="Имя">
+            Пароль<input id="regpass" class="form-control" type="password" placeholder="Пароль">
+            <button class="btn" onclick="reg()">Зарегистрироваться</button>
+        </form>
+    </div>
+  </body>
+</html>
