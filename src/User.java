@@ -11,7 +11,7 @@ public class User {
     private String status;
     private Date date_online;
 
-    public User(String login, int id, String password, String status, Date date_online) {
+    public User( int id, String login, String password, String status, Date date_online) {
         this.login = login;
         this.id = id;
         this.password = password;

@@ -7,6 +7,11 @@
         <element id="directory" name="classes">
           <element id="module-output" name="WebChat2" />
         </element>
+        <element id="directory" name="lib">
+          <element id="library" level="project" name="ojdbc6" />
+          <element id="library" level="project" name="javax.servlet.jsp.jstl" />
+          <element id="library" level="project" name="json-simple-1.1.1" />
+        </element>
       </element>
     </root>
   </artifact>

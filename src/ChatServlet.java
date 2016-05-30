@@ -3,7 +3,6 @@
  * Created by Svetlana on 30.05.2016.
  */
 
-
     import org.json.simple.JSONObject;
 
     import javax.servlet.http.HttpServletRequest;
@@ -13,6 +12,7 @@
     import java.io.PrintWriter;
     import java.sql.*;
     import java.text.SimpleDateFormat;
+    import java.util.Locale;
 
 
 public class ChatServlet extends javax.servlet.http.HttpServlet {
@@ -32,6 +32,7 @@ public class ChatServlet extends javax.servlet.http.HttpServlet {
                     String password = req.getParameter("password");
 
                     User user = null;
+                    Locale.setDefault(Locale.ENGLISH);
                     Connection conn = null;
                     Statement statement = null;
 
@@ -80,6 +81,7 @@ public class ChatServlet extends javax.servlet.http.HttpServlet {
                     String password = req.getParameter("password");
 
                     User user = null;
+                    Locale.setDefault(Locale.ENGLISH);
                     Connection conn = null;
                     Statement statement = null;
 
@@ -93,12 +95,16 @@ public class ChatServlet extends javax.servlet.http.HttpServlet {
                             answer.put("reg","no");
                         } else {
                             //no such user - good
-                            user = new User();
-                            user.setId(rs.getInt("ID"));
-                            user.setLogin(rs.getString("LOGIN"));
-                            user.setPassword(rs.getString("PASSWORD"));
-                            user.setDate_online(new Date(System.currentTimeMillis()));
-
+                            rs = statement.executeQuery("INSERT INTO CHAT_USER (id,login,password, status) VALUES (chat_seq_us.nextval,'" + login + "','" + password + "', 'online')");
+                            rs = statement.executeQuery("SELECT * FROM CHAT_USER WHERE LOGIN = '" + login + "'");
+                            if (rs.next()) {
+                                user = new User();
+                                user.setId(rs.getInt("ID"));
+                                user.setLogin(rs.getString("LOGIN"));
+                                user.setPassword(rs.getString("PASSWORD"));
+                                user.setDate_online(new Date(System.currentTimeMillis()));
+                                //System.out.println(user.getLogin()+" "+user.getPassword());
+                            }
                         }
 
                     } catch (SQLException e) {
@@ -107,7 +113,6 @@ public class ChatServlet extends javax.servlet.http.HttpServlet {
                     try {
                     if (user != null) {
                         statement = conn.createStatement();
-                        ResultSet rs = statement.executeQuery("INSERT INTO CHAT_USER (id,login,password, status) VALUES (chat_seq_us.nextval,'" + login + "','" + password + "', 'online')");
                         answer.put("reg","success");
                         session.setAttribute("authorize", true);
                         session.setAttribute("user", user);
@@ -130,14 +135,25 @@ public class ChatServlet extends javax.servlet.http.HttpServlet {
 
         protected void doGet(HttpServletRequest request, HttpServletResponse response) throws javax.servlet.ServletException, IOException {
 
-            // Отправляем ответ клиенту в формате JSON
             response.setContentType("application/json;charset=UTF-8");
             PrintWriter out = response.getWriter();
             JSONObject answer = new JSONObject();
 
+            Locale.setDefault(Locale.ENGLISH);
             Connection conn = null;
             Statement statement;
             ResultSet result;
+
+            if (request.getParameter("action").equals("isauth")) {
+                HttpSession session = request.getSession();
+                User user = (User) session.getAttribute("user");
+                if (user == null) {
+                    answer.put("auth","no");
+                } else {
+                    answer.put("auth","yes");
+                    answer.put("name",user.getLogin());
+                }
+            }
 
             if (request.getParameter("action").equals("userlist")) {
                 try {
@@ -160,6 +176,8 @@ public class ChatServlet extends javax.servlet.http.HttpServlet {
 
                     String prev = format.format(last);
                     String now = format.format(new Date(System.currentTimeMillis()));
+                    //System.out.println(prev);
+                    //System.out.println(now);
 
                     try {
                         conn = connect();
@@ -168,8 +186,8 @@ public class ChatServlet extends javax.servlet.http.HttpServlet {
 
                         while (result.next()) {
                             String ans = "";
-
-                            ResultSet res = statement.executeQuery("SELECT * FROM CHAT_USER WHERE ID = "+result.getString("sender_id"));
+                            Statement st = conn.createStatement();
+                            ResultSet res = st.executeQuery("SELECT * FROM CHAT_USER WHERE ID = "+result.getString("sender_id"));
                             if(res.next()){
                                 ans+=res.getString("LOGIN");
                             }
@@ -189,16 +207,6 @@ public class ChatServlet extends javax.servlet.http.HttpServlet {
 
             }
 
-            if (request.getParameter("action").equals("isauth")) {
-                HttpSession session = request.getSession();
-                User user = (User) session.getAttribute("user");
-                if (user == null) {
-                    answer.put("auth","no");
-                } else {
-                    answer.put("auth","yes");
-                    answer.put("name",user.getLogin());
-                }
-            }
 
             if (request.getParameter("action").equals("send")) {
                 HttpSession session = request.getSession();
@@ -212,7 +220,7 @@ public class ChatServlet extends javax.servlet.http.HttpServlet {
                         String message = request.getParameter("message");
                         String now = outputDateFormat.format(new Date(System.currentTimeMillis()));
 
-                        statement.executeQuery("INSERT INTO CHAT_MESSAGE (id,text,sender_id,send_date) VALUES (chat_seq_mes.nextval,'"+message+"'," + user.getId() + ", TO_DATE('" + now + "','YYYY-MM-DD HH24:MI:SS'))");
+                        statement.executeQuery("INSERT INTO CHAT_MESSAGE (id,message,sender_id,send_date) VALUES (chat_seq_mes.nextval,'"+message+"'," + user.getId() + ", TO_DATE('" + now + "','YYYY-MM-DD HH24:MI:SS'))");
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
@@ -223,6 +231,24 @@ public class ChatServlet extends javax.servlet.http.HttpServlet {
                         e.printStackTrace();
                     }
                 }
+            if (request.getParameter("action").equals("logoff")){
+                HttpSession session = request.getSession();
+                User user = (User) session.getAttribute("user");
+                try {
+                    conn = connect();
+                    statement = conn.createStatement();
+
+                    statement.executeQuery("UPDATE CHAT_USER SET STATUS = 'offline' WHERE ID ="+user.getId());
+
+                    session.setAttribute("user", null);
+                    session.invalidate();
+
+                    answer.put("res","yes");
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+            }
 
 
             out.println(answer);
